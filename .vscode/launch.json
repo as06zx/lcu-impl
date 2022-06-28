@@ -8,7 +8,7 @@
       "name": "Python: 모듈",
       "type": "python",
       "request": "launch",
-      "module": "lsu",
+      "module": "lcu",
       "justMyCode": false
     }
   ]
