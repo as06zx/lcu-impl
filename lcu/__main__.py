@@ -130,6 +130,7 @@ def launch(
     @conn.connector.ready
     async def connect(connection):
         print("connected!")
+        conn.connection = connection
         await summoner_service.start()
         await chat_service.start()
         await lobby_service.start()
@@ -140,14 +141,18 @@ def launch(
 
     @conn.connector.ws.register('/lol-chat/v1/conversations/', event_types=('CREATE',))
     async def onChatChanged(connection, event):
+        print('on chat changed')
+        conn.connection = connection
+        # conn.event = event
         chat_service.lastMessage = event.data
         if "body" not in chat_service.lastMessage: return
         
         body, type = chat_service.lastMessage["body"], chat_service.lastMessage["type"]
-        conn.connection = connection
-        conn.event = event
 
-        if type != "groupchat": return
+        if type != "groupchat":
+            print('type is not groupchat')
+            return
+
 
         userid = chat_service.lastMessage["fromSummonerId"]
         username =  lobby_service.memberList[userid]
@@ -155,9 +160,10 @@ def launch(
         if userDB:
             await userdb_service.editUser(username, "Point", userDB["Point"] + 1)
         
-        if body[0:1] == "/":
+        if body[0] == "/":
             command = (body[1:]).split(" ", 1)[0]
-            parameters = re.split('\s+', body[len(command) + 1 : len(body)].split())
+            parameters = body[len(command) + 1 : len(body)].split()
+            if len(parameters) == 0: parameters = [""]
             if command in commands:
                 await commands[command](parameters)
 

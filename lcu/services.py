@@ -25,6 +25,8 @@ class ConnectionRepository(BaseService):
     _event: object
 
     def __init__(self) -> None:
+        self._lastConnection = None
+        self._connection = None
         self._connector = Connector()
         super().__init__()
     
@@ -68,7 +70,7 @@ class UserDBService(BaseService):
 
     async def start(self) -> None:
         cur = self.db.cursor()
-        cur.execute("CREATE TABLE IF NOT EXIST USERS(UserName TEXT, Level INTEGER, Point INTEGER);")
+        cur.execute("CREATE TABLE IF NOT EXISTS USERS (UserName TEXT, Level INTEGER, Point INTEGER);")
         return await super().start()
 
     async def addUser(self, username: str, level: int, point: int) -> None: # addUserDB
@@ -139,6 +141,7 @@ class LobbyService(BaseService):
 
     def __init__(self, conn: ConnectionRepository) -> None:
         self.conn = conn
+        self.memberList = {}
         super().__init__()
 
     async def start(self) -> None:
