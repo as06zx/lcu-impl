@@ -5,6 +5,10 @@ from dependency_injector.wiring import Provide, inject
 from .containers import Container
 from .services import ChatService, ConnectionRepository, LobbyService, SummonerService, UserDBService
 
+
+USER_NAME = 0
+LEVEL = 1
+POINT = 2
 @inject
 def launch(
     conn: ConnectionRepository = Provide[Container.conn_repository],
@@ -81,8 +85,8 @@ def launch(
             await chat_service.sendMessage(text = "등록된 닉네임이 아닙니다")
             return
 
-        level = targetDB["Level"]
-        point = targetDB["Point"]
+        level = targetDB[LEVEL]
+        point = targetDB[POINT]
 
         outMsg = "\n".join([
             f"{targetName}'s Info",
@@ -107,12 +111,12 @@ def launch(
             await chat_service.sendMessage(text = "자신에게 보낼수 없습니다")
             return 
         
-        if amount > userDB["Point"]:
+        if amount > userDB[POINT]:
             await chat_service.sendMessage(text = "보유중인 포인트보다 많습니다")
             return
 
-        await userdb_service.editUser(username, "Point", userDB["Point"] - amount)
-        await userdb_service.editUser(targetName, "Point", targetDB["Point"] + amount)
+        await userdb_service.editUser(username, "Point", userDB[POINT] - amount)
+        await userdb_service.editUser(targetName, "Point", targetDB[POINT] + amount)
         await chat_service.sendMessage(text = f"{username} 포인트 기부 ({amount}) -> {targetName}")
 
 
@@ -141,13 +145,13 @@ def launch(
 
     @conn.connector.ws.register('/lol-chat/v1/conversations/', event_types=('CREATE',))
     async def onChatChanged(connection, event):
-        print('on chat changed')
         conn.connection = connection
-        # conn.event = event
+        conn.event = event
         chat_service.lastMessage = event.data
         if "body" not in chat_service.lastMessage: return
         
         body, type = chat_service.lastMessage["body"], chat_service.lastMessage["type"]
+        print(f'>> {body}')
 
         if type != "groupchat":
             print('type is not groupchat')
@@ -158,7 +162,7 @@ def launch(
         username =  lobby_service.memberList[userid]
         userDB = await userdb_service.getUser(username)
         if userDB:
-            await userdb_service.editUser(username, "Point", userDB["Point"] + 1)
+            await userdb_service.editUser(username, "Point", userDB[POINT] + 1)
         
         if body[0] == "/":
             command = (body[1:]).split(" ", 1)[0]

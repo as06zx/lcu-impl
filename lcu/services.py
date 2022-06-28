@@ -27,6 +27,8 @@ class ConnectionRepository(BaseService):
     def __init__(self) -> None:
         self._lastConnection = None
         self._connection = None
+        self._lastEvent = None
+        self._event = None
         self._connector = Connector()
         super().__init__()
     
@@ -83,8 +85,7 @@ class UserDBService(BaseService):
         assert username and key and value is not None
 
         cur = self.db.cursor()
-        cur.execute("UPDATE USERS SET :key = :value WHERE UserName = :username;", {"username" : username, "key" : key, "value" : value })
-    
+        cur.execute(f'UPDATE USERS SET {key} = {value} WHERE UserName = "{username}";')
     async def getAllUsers(self):  # getUserDB        
         cur = self.db.cursor()
         cur.execute("SELECT * FROM USERS;")
