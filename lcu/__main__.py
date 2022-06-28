@@ -77,7 +77,7 @@ def launch(
         lastMessage = conn.event.data
         userid = lastMessage["fromSummonerId"]
         username = lobby_service.memberList[userid]
-        targetName = param[0]
+        targetName = " ".join(param)
         outMsg = ""
 
         targetDB = await userdb_service.getUser(targetName)
@@ -153,10 +153,17 @@ def launch(
         body, type = chat_service.lastMessage["body"], chat_service.lastMessage["type"]
         print(f'>> {body}')
 
-        if type != "groupchat":
-            print('type is not groupchat')
-            return
 
+
+        if type != "groupchat":
+            await lobby_service.updateMemberList()
+            if body == 'joined_room':
+                await cmdHelp(["1"])
+                await cmdHelp(["2"])
+            if body == 'left_room':
+                await chat_service.sendMessage(text = f"잘가요 {username} 님")
+            print(f'type is {type}')
+            return
 
         userid = chat_service.lastMessage["fromSummonerId"]
         username =  lobby_service.memberList[userid]
